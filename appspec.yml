@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: /index.html
+  - source: /
     destination: /var/www/html/
 hooks:
   BeforeInstall:
@@ -16,5 +16,5 @@ hooks:
       timeout: 300
       runas: root
 
-      
+
 
