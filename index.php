@@ -1,3 +1,5 @@
+<?php include "../inc/dbinfo.inc"; ?>
+
 <!DOCTYPE html>
 <html lang="zxx">
 
@@ -31,10 +33,39 @@
 </head>
 
 <body class="theme-dark">
+
+  <!-- Database Connection -->
+  <?php
+
+  /* Connect to MySQL and select the database. */
+  $connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
+
+  if (mysqli_connect_errno()) echo "Failed to connect to MySQL: " . mysqli_connect_error();
+
+  $database = mysqli_select_db($connection, DB_DATABASE);
+
+  /* Ensure that the EMPLOYEES table exists. */
+  CreateTable($connection, DB_DATABASE);
+
+  /* If input fields are populated, add a message to the DB. */
+  $user_name = htmlentities($_POST['NAME']);
+  $user_email = htmlentities($_POST['EMAIL']);
+  $user_subject = htmlentities($_POST['SUBJECT']);
+  $user_message = htmlentities($_POST['MESSAGE']);
+
+  if (strlen($user_name) || strlen($user_email) || strlen($user_subject) || strlen($user_message)) {
+    AddMessage($connection, $user_name, $user_email, $user_subject, $user_message);
+  }
+?>
  
   <!-- Navbar-->
  
   <!-- Home-->
+
+  <br>
+  <br>
+  <br>
+
   
     
       <div class="container">
@@ -55,14 +86,14 @@
                 <div class="row">
                   <!-- Contact form-->
                   <div class="col-12 col-lg-7">
-                    <form class="contact-form" id="contact-form" action="#">
+                    <form class="contact-form" id="contact-form" action="<?PHP echo $_SERVER['SCRIPT_NAME'] ?>" method="POST">
                       <h4 class="content-title">Message Me</h4>
                       <div class="row">
-                        <div class="col-12 col-md-6 form-group"><input class="form-control"  type="text" name="name" placeholder="Name" required=""></div>
-                        <div class="col-12 col-md-6 form-group"><input class="form-control"  type="email" name="email" placeholder="Email" required=""></div>
-                        <div class="col-12 form-group"><input class="form-control"  type="text" name="subject" placeholder="Subject" required=""></div>
-                        <div class="col-12 form-group form-message"><textarea class="form-control"  name="message" placeholder="Message" rows="5" required=""></textarea></div>
-                        <div class="col-12 form-submit"><button class="btn button-main button-scheme"  type="submit">Send Message</button>
+                        <div class="col-12 col-md-6 form-group"><input class="form-control"  type="text" name="NAME" placeholder="Name" required=""></div>
+                        <div class="col-12 col-md-6 form-group"><input class="form-control"  type="email" name="EMAIL" placeholder="Email" required=""></div>
+                        <div class="col-12 form-group"><input class="form-control"  type="text" name="SUBJECT" placeholder="Subject" required=""></div>
+                        <div class="col-12 form-group form-message"><textarea class="form-control"  name="MESSAGE" placeholder="Message" rows="5" required=""></textarea></div>
+                        <div class="col-12 form-submit"><button class="btn button-main button-scheme"  type="submit" value="Add Data">Send Message</button>
                           <p class="contact-feedback"></p>
                         </div>
                       </div>
@@ -142,8 +173,59 @@
   <!-- removeIf(customizerDist)-->
   <script src="../customizer/main.js"></script>
   <!-- endremoveIf(customizerDist)-->
+
+<?php
+
+  mysqli_free_result($result);
+  mysqli_close($connection);
+
+?>
+
 </body>
-
-
-
 </html>
+
+
+<?php
+
+/* Add an message to the table. */
+function AddMessage($connection, $name, $email, $subject, $message) {
+   $n = mysqli_real_escape_string($connection, $name);
+   $a = mysqli_real_escape_string($connection, $address);
+   $s = mysqli_real_escape_string($connection, $subject);
+   $m = mysqli_real_escape_string($connection, $message);
+  
+
+   $query = "INSERT INTO SGP (NAME, ADDRESS, SUBJECT, MESSAGE) VALUES ('$n', '$a', '$s', '$m');";
+
+   if(!mysqli_query($connection, $query)) echo("<p>Error adding Message data.</p>");
+}
+
+/* Check whether the table exists and, if not, create it. */
+function CreateTable($connection, $dbName) {
+  if(!TableExists("SGP", $connection, $dbName))
+  {
+     $query = "CREATE TABLE SGP (
+         ID int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+         NAME VARCHAR(45),
+         ADDRESS VARCHAR(90),
+         SUBJECT VARCHAR(90),
+         MESSAGE VARCHAR(90)
+       )";
+
+     if(!mysqli_query($connection, $query)) echo("<p>Error creating table.</p>");
+  }
+}
+
+/* Check for the existence of a table. */
+function TableExists($tableName, $connection, $dbName) {
+  $t = mysqli_real_escape_string($connection, $tableName);
+  $d = mysqli_real_escape_string($connection, $dbName);
+
+  $checktable = mysqli_query($connection,
+      "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '$t' AND TABLE_SCHEMA = '$d'");
+
+  if(mysqli_num_rows($checktable) > 0) return true;
+
+  return false;
+}
+?>        
